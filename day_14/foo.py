@@ -8,24 +8,30 @@ import sys
 
 from aoc_utils.data import *
 
-def floating(mask, addr, i=0):
-    if i == len(mask):
-        yield ''
+def floating(mask_string, addr, i=0):
+    if i == len(mask_string):
+        yield 0x0
     else:
-        if mask[i] == '0':
-            prefix = [addr[i]]
-        elif mask[i] == '1':
-            prefix = ['1']
+        bit = 0x1 << (35 - i)
+        if mask_string[i] == '0':
+            prefix = [addr & bit]
+        elif mask_string[i] == '1':
+            prefix = [bit]
         else:
-            prefix = ['0', '1']
+            prefix = [0x0, bit]
 
-        for addr in floating(mask, addr, i+1):
+        for floating_addrs in floating(mask_string, addr, i+1):
             for p in prefix:
-                yield p + addr
+                yield p | floating_addrs
 
-def binary_string(val, padding=36):
-    bstring = bin(int(val))[2:]
-    return '0' * (padding - len(bstring)) + bstring
+def to_mask(mask_string, func):
+    bitmask = 0
+    bit = 0x1
+    for mask_char in reversed(mask_string):
+        if func(mask_char):
+            bitmask |= bit
+        bit <<= 1
+    return bitmask
 
 def main():
     mem_line_re = re.compile(r'mem\[(\d+)\] = (\d+)')
@@ -34,9 +40,9 @@ def main():
     mem = collections.defaultdict(int)
     for line in read_lines():
         if line.startswith('mask'):
-            mask = mask_re.match(line).group(1)
-            or_mask = int(''.join(['1' if b == '1' else '0' for b in mask]), base=2)
-            and_mask = int(''.join(['0' if b == '0' else '1' for b in mask]), base=2)
+            mask_string = mask_re.match(line).group(1)
+            or_mask = to_mask(mask_string, lambda b: b == '1')
+            and_mask = to_mask(mask_string, lambda b: b != '0')
         else:
             addr, value = [int(v) for v in mem_line_re.match(line).group(1, 2)]
             mem[addr] = (value & and_mask) | or_mask
@@ -45,14 +51,12 @@ def main():
     mem = collections.defaultdict(int)
     for line in read_lines():
         if line.startswith('mask'):
-            mask = mask_re.match(line).group(1)
+            mask_string = mask_re.match(line).group(1)
         else:
             addr, value = mem_line_re.match(line).group(1, 2)
-            addr = binary_string(addr)
             value = int(value)
-            assert(len(mask) == len(addr))
-            for a in floating(mask, addr):
-                mem[int(a, base=2)] = value
+            for a in floating(mask_string, int(addr)):
+                mem[a] = value
 
     print('part 2 =', sum(mem.values()))
 
