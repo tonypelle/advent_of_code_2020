@@ -10,17 +10,18 @@ from aoc_utils.data import *
 
 def floating(mask, addr, i=0):
     if i == len(mask):
-        return ['']
+        yield ''
     else:
-        bit = mask[i]
-        a = addr[i]
-        results = floating(mask, addr, i+1)
-        if bit == '0':
-            return [a + addr for addr in results]
-        elif bit == '1':
-            return ['1' + addr for addr in results]
+        if mask[i] == '0':
+            prefix = [addr[i]]
+        elif mask[i] == '1':
+            prefix = ['1']
         else:
-            return ['0' + addr for addr in results] + ['1' + addr for addr in results]
+            prefix = ['0', '1']
+
+        for addr in floating(mask, addr, i+1):
+            for p in prefix:
+                yield p + addr
 
 def binary_string(val, padding=36):
     bstring = bin(int(val))[2:]
