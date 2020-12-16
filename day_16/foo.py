@@ -6,15 +6,14 @@ import math
 import re
 import sys
 
+from aoc_utils import *
 from aoc_utils.data import *
 
 def valid(n, a, b):
     return (a[0] <= n <= a[1]) or (b[0] <= n <= b[1])
 
 def is_valid(n, fields):
-    for a, b in fields.values():
-        if valid(n, a, b):
-            return True
+    return any(valid(n, a, b) for a, b in fields.values())
 
 def read_data():
     fields = collections.OrderedDict()
@@ -26,12 +25,11 @@ def read_data():
         fields[field] = (int(a0), int(a1)), (int(b0), int(b1))
         line = next(lines)
 
-    line = next(lines) # burn it: your ticket
-    line = next(lines)
-    my_ticket = [int(x) for x in line.split(',')]
+    assert(next(lines).startswith('your ticket')) # burn it
+    my_ticket = [int(x) for x in next(lines).split(',')]
 
-    line = next(lines) # burn it: nearby tickets
-    line = next(lines)
+    assert(next(lines) == '')  # burn it
+    assert(next(lines).startswith('nearby tickets')) # burn it
 
     other_tickets = []
     while True:
@@ -57,7 +55,6 @@ def main():
     print('part 1 =', total)
 
     possible_fields = [set(fields.keys()) for _ in my_ticket]
-
     for ticket in valid_tickets:
         for col, val in enumerate(ticket):
             for field, (a, b) in fields.items():
@@ -80,7 +77,7 @@ def main():
 
     cols = [col for col, field in finals if field.startswith('departure')]
     assert(len(cols) == 6)
-    total = functools.reduce(lambda x, y: x*y, [val for col, val in enumerate(my_ticket) if col in cols])
+    total = mult(val for col, val in enumerate(my_ticket) if col in cols)
     assert(total == 2355350878831)
     print('part 2 =', total)
 
