@@ -11,33 +11,27 @@ from aoc_utils.data import *
 
 def match_rule_id(rule_id, line, i, non_term_rules, term_rules):
     if i >= len(line):
-        yield False, i
         return
 
     if rule_id in term_rules:
         if line[i] == term_rules[rule_id]:
-            yield True, i + 1
-        else:
-            yield False, i
+            yield i + 1
     else:
         for frag in non_term_rules[rule_id]:
-            for matched, next_i in match_fragment(frag, line, i, non_term_rules, term_rules):
-                if matched:
-                    yield matched, next_i
+            for next_i in match_fragment(frag, line, i, non_term_rules, term_rules):
+                yield next_i
 
 def match_fragment(fragment, line, i, non_term_rules, term_rules):
     rule_id, remaining_fragment = fragment[0], fragment[1:]
-    for matched, next_i in match_rule_id(rule_id, line, i, non_term_rules, term_rules):
-        if matched:
-            if remaining_fragment:
-                for new_match, next_next_i in match_fragment(remaining_fragment, line, next_i, non_term_rules, term_rules):
-                    if new_match:
-                        yield new_match, next_next_i
-            else:
-                yield matched, next_i
+    for next_i in match_rule_id(rule_id, line, i, non_term_rules, term_rules):
+        if remaining_fragment:
+            for next_next_i in match_fragment(remaining_fragment, line, next_i, non_term_rules, term_rules):
+                yield next_next_i
+        else:
+            yield next_i
 
 def match(rule_id, line, non_term_rules, term_rules):
-    return any(True for matched, matched_len in match_rule_id(rule_id, line, 0, non_term_rules, term_rules) if matched and matched_len == len(line))
+    return any(matched_len == len(line) for matched_len in match_rule_id(rule_id, line, 0, non_term_rules, term_rules))
 
 def main():
     do_rules = True
@@ -51,8 +45,7 @@ def main():
 
         if do_rules:
             rule_id, rule = line.split(':')
-            parts = rule.strip().split('|')
-            rules[rule_id] = [part.split() for part in parts]
+            rules[rule_id] = [part.split() for part in rule.strip().split('|')]
         else:
             lines.append(line)
 
@@ -73,6 +66,8 @@ def main():
     part2 = sum(1 for line in lines if match(0, line, non_term_rules, term_rules))
     print('part 1=', part1)
     print('part 2=', part2)
+    assert(part1 == 224)
+    assert(part2 == 436)
 
 if __name__ == '__main__':
     main()
